@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru" dir="ltr">
+    <head>
+        <meta charset="utf-8" />
+        <title></title>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital@1&display=swap" rel="stylesheet">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <style media="screen">
+            body{
+                background-color:rgb(241, 240, 240);
+            }
+            canvas {
+                background-color: white;
+                margin-left: 230px;
+            }
+
+            .clearfix::after {
+                content: '';
+                clear: both;
+                display: table;
+            }
+
+            .buttons{
+                padding:  20px 230px;
+           
+                }
+
+            .draw{
+                margin: 0;
+                padding: 0;
+            }
+
+            .clear{
+                margin-left: 20px;
+            }
+
+            button{
+                outline:none;
+                height: 25px;
+                text-align: center;
+                width: 170px;
+                border-radius:40px;
+                background: rgb(241, 240, 240);
+                border: 1px solid #cc7bcc;
+                color:#3f3f3f;
+                letter-spacing:1px;
+                font-family: 'Poppins', sans-serif;
+                font-size:13px;
+                font-weight:bold;
+                cursor: pointer;
+                transition: all 0.25s ease;
+            }
+
+            button:hover{
+                    color:white;
+                    background: #b640b6;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <form class="buttons" id="form" method="post">
+                <button class="draw" type="button" name="bspline" onclick="drawBezierCurve()">Нарисовать кривую</button>
+                <button class="clear" type="button" name="bspline" onclick="clearCanvasWindow()">Очистить доску</button>
+            </form>
+    
+            <canvas id="canvas" width="1000" height="600"></canvas>
+        </div>
+        <script>
+            var points = [];
+            var knots = [];
+            var degree = 0;
+            var isCanvasUsingNow = false
+
+            function clear() {
+                location.reload();
+            }
+
+            function clearCanvasWindow() {
+                const context = canvas.getContext('2d');
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                points = [];
+                knots = [];
+                degree = 0;
+                isCanvasUsingNow = false
+            }
+
+            $('#canvas').click(function (e) {
+                var point = setPointFromUser(e);
+                points.push(point);
+                drawBasePoint(point, 'grey'); // grey 
+            });
+
+            function setPointFromUser(event) {
+                if (isCanvasUsingNow){
+                    alert('Сначала нужно очистить доску!')
+                }
+                else{
+                    var rect = canvas.getBoundingClientRect();
+
+                    var x = event.clientX - rect.left;
+                    var y = event.clientY - rect.top;
+
+                    var point = new Point(x, y);
+
+                    Point(point);
+                    return point;
+                }
+            }
+
+
+
+            function drawBezierCurve(point1, point2, point3) {
+
+
+                for (var i = 0; i < points.length - 1; i++) {
+                    var ctx = document.getElementById('canvas').getContext('2d');
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#1a2edb';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(points[i].x, points[i].y);
+                    ctx.lineTo(points[i+1].x, points[i+1].y);
+                    ctx.stroke();
+                }
+
+
+                if (points.length >= 3){
+                    var t = 0;
+                    var inter = setInterval(function () {
+
+                        var mainBezierPoint = findBezierPointOfPoints([...points], t);
+                        drawPoint(mainBezierPoint, '#b640b6'); // purple
+                        t = t + 0.001;
+                        if (t > 1) {
+                            clearInterval(inter);
+                        }
+                    });
+                    isCanvasUsingNow = true
+                }
+                else alert('Введено меньше 3 точек')
+            }
+
+            function findBezierPointOfPoints(points, t) {
+                if (points.length == 1) {
+                    return points[0];
+                }
+                var tempPoint = [];
+                for (var i = 0; i < points.length - 1; i++) {
+                    tempPoint.push(findBezierPoint(points[i], points[i + 1], t));
+                }
+
+                return findBezierPointOfPoints([...tempPoint], t);
+            }
+
+            function findBezierPoint(point1, point2, t) {
+                var x = (1 - t) * point1.x + t * point2.x;
+                var y = (1 - t) * point1.y + t * point2.y;
+
+                var newPoint = new Point(x, y);
+
+                return newPoint;
+            }
+
+
+            function drawBasePoint(point, color) {
+                var ctx = document.getElementById('canvas').getContext('2d');
+
+                ctx.fillStyle = color;
+
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, Math.PI * 2, true);
+                
+                ctx.fill();
+            }
+
+            function drawPoint(point, color) {
+                var ctx = document.getElementById('canvas').getContext('2d');
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 2, 0, Math.PI * 2, true);
+                ctx.fill();
+            }
+            function Point(x, y) {
+                var obj = {};
+                obj.x = x;
+                obj.y = y;
+                return obj;
+            }
+        </script>
+    </body>
+</html>
